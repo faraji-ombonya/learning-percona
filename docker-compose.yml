@@ -1,0 +1,13 @@
+services:
+  mysql:
+    image: percona/percona-server:8.4.11
+    container_name: psmysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+    volumes:
+      - myvol:/var/lib/mysql
+    restart: unless-stopped
+volumes:
+  myvol:
