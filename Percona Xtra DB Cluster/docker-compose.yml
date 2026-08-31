@@ -1,0 +1,48 @@
+services:
+  pxc-cert:
+    image: percona/percona-xtradb-cluster:8.4
+    container_name: pxc-cert
+    volumes:
+      - $PWD/cert:/cert
+    command: /bin/bash /cert/create-ssl-certs.sh 
+
+  pxc-node1:
+    image: percona/percona-xtradb-cluster:8.4
+    container_name: pxc-node1
+    environment:
+      MYSQL_ROOT_PASSWORD: test1234#
+      CLUSTER_NAME: pxc-cluster1
+    networks:
+      - pxc-network
+    volumes:
+      - $PWD/cert:/cert
+      - $PWD/config:/etc/percona-xtradb-cluster.conf.d
+
+  pxc-node2:
+    image: percona/percona-xtradb-cluster:8.4
+    container_name: pxc-node2
+    environment:
+      MYSQL_ROOT_PASSWORD: test1234#
+      CLUSTER_NAME: pxc-cluster1
+      CLUSTER_JOIN: pxc-node1
+    networks:
+      - pxc-network
+    volumes:
+      - $PWD/cert:/cert
+      - $PWD/config:/etc/percona-xtradb-cluster.conf.d
+
+  pxc-node3:
+    image: percona/percona-xtradb-cluster:8.4
+    container_name: pxc-node3
+    environment:
+      MYSQL_ROOT_PASSWORD: test1234#
+      CLUSTER_NAME: pxc-cluster1
+      CLUSTER_JOIN: pxc-node1
+    networks:
+      - pxc-network
+    volumes:
+      - $PWD/cert:/cert
+      - $PWD/config:/etc/percona-xtradb-cluster.conf.d
+
+networks:
+  pxc-network:
