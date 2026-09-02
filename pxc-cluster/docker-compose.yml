@@ -1,0 +1,95 @@
+secrets:
+  mysql_root_password:
+    file: ./mysql_root_password
+  xtrabackup_password:
+    file: ./xtrabackup_password
+services:
+  pxc1:
+    image: percona/percona-xtradb-cluster:8.4
+    container_name: pxc1
+    environment:
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mysql_root_password
+      - CLUSTER_NAME=pxc-cluster
+      - XTRABACKUP_PASSWORD_FILE=/run/secrets/xtrabackup_password
+    secrets:
+      - mysql_root_password
+      - xtrabackup_password
+    volumes:
+      - ./certs:/etc/mysql/certs:ro,Z
+      - ./conf.d:/etc/percona-xtradb-cluster.conf.d:ro,Z
+      - ./data-pxc1:/var/lib/mysql,Z
+    networks:
+      - pxcnet
+    ports:
+      - "3306:3306"
+    command: ["--wsrep-new-cluster"]
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  pxc2:
+    image: percona/percona-xtradb-cluster:8.4
+    container_name: pxc2
+    environment:
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mysql_root_password
+      - CLUSTER_NAME=pxc-cluster
+      - CLUSTER_JOIN=pxc1
+      - XTRABACKUP_PASSWORD_FILE=/run/secrets/xtrabackup_password
+    secrets:
+      - mysql_root_password
+      - xtrabackup_password
+    volumes:
+      - ./certs:/etc/mysql/certs:ro,Z
+      - ./conf.d:/etc/percona-xtradb-cluster.conf.d:ro,Z
+      - ./data-pxc2:/var/lib/mysql,Z
+    networks:
+      - pxcnet
+    depends_on:
+      pxc1:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  pxc3:
+    image: percona/percona-xtradb-cluster:8.4
+    container_name: pxc3
+    environment:
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mysql_root_password
+      - CLUSTER_NAME=pxc-cluster
+      - CLUSTER_JOIN=pxc1
+      - XTRABACKUP_PASSWORD_FILE=/run/secrets/xtrabackup_password
+    secrets:
+      - mysql_root_password
+      - xtrabackup_password
+    volumes:
+      - ./certs:/etc/mysql/certs:ro,Z
+      - ./conf.d:/etc/percona-xtradb-cluster.conf.d:ro,Z
+      - ./data-pxc3:/var/lib/mysql,Z
+    networks:
+      - pxcnet
+    depends_on:
+      pxc1:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+networks:
+  pxcnet:
+    driver: bridge
